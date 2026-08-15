@@ -1,6 +1,6 @@
 # Game Lab Arcade
 
-A collection of five browser-based HTML5 games, shipped by five student teams, with a single landing page (`index.html`) that links out to all of them.
+A collection of five browser-based HTML5 games, shipped by five student teams during the [ClickToStart Foundation AI Camps](https://www.clicktostart.org/), with a single landing page (`index.html`) that links out to all of them.
 
 **[Play it live](#deploying-to-github-pages)** once deployed, or just open `index.html` in a browser.
 
