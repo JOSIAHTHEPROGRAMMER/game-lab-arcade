@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Lab Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #0a0e14;
+    --panel: #11161d;
+    --panel-edge: #1c232c;
+    --text: #d8dee6;
+    --text-dim: #7c8794;
+    --amber: #ffb020;
+
+    --dungeon: #ff4d4d;
+    --dungeon-glow: #ff4d4d55;
+    --rabbit: #a6ff3d;
+    --rabbit-glow: #a6ff3d55;
+    --fury: #3dd6ff;
+    --fury-glow: #3dd6ff55;
+    --chaos1: #ff3dbd;
+    --chaos2: #3dfff0;
+    --racing: #ffb020;
+    --racing-glow: #ffb02055;
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'VT323', monospace;
+    font-size: 20px;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* CRT scanline + vignette overlay */
+  body::before{
+    content:"";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 50;
+    background:
+      repeating-linear-gradient(
+        to bottom,
+        rgba(0,0,0,0) 0px,
+        rgba(0,0,0,0) 2px,
+        rgba(0,0,0,0.18) 3px
+      );
+    mix-blend-mode: multiply;
+  }
+  body::after{
+    content:"";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 49;
+    background: radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,0.55) 100%);
+  }
+
+  .wrap{
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 48px 24px 80px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Marquee header */
+  header{
+    text-align: center;
+    margin-bottom: 56px;
+  }
+  .eyebrow{
+    font-family: 'Press Start 2P', monospace;
+    font-size: 9px;
+    letter-spacing: 4px;
+    color: var(--text-dim);
+    margin-bottom: 18px;
+  }
+  h1{
+    font-family: 'Press Start 2P', monospace;
+    font-size: clamp(26px, 5vw, 46px);
+    line-height: 1.5;
+    margin: 0 0 14px;
+    color: #fff;
+    text-shadow:
+      0 0 6px var(--amber),
+      0 0 22px var(--amber),
+      3px 3px 0 #402400;
+    animation: flicker 6s infinite;
+  }
+  @keyframes flicker{
+    0%, 92%, 100% { opacity: 1; }
+    93% { opacity: 0.75; }
+    94% { opacity: 1; }
+    95% { opacity: 0.6; }
+    96% { opacity: 1; }
+  }
+  header p{
+    color: var(--text-dim);
+    font-size: 20px;
+    max-width: 560px;
+    margin: 0 auto;
+  }
+  .insert-coin{
+    display:inline-block;
+    margin-top: 22px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: var(--amber);
+    letter-spacing: 2px;
+    animation: blink 1.4s steps(1) infinite;
+  }
+  @keyframes blink{ 50%{ opacity: 0; } }
+
+  /* Cabinet grid */
+  .grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 26px;
+  }
+
+  .cabinet{
+    background: var(--panel);
+    border: 1px solid var(--panel-edge);
+    border-radius: 4px;
+    padding: 22px 22px 24px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .cabinet:hover{
+    transform: translateY(-4px);
+  }
+  .cabinet::before{
+    /* screen glow bar */
+    content:"";
+    position:absolute;
+    top:0; left:0; right:0;
+    height: 3px;
+    border-radius: 4px 4px 0 0;
+    background: var(--accent);
+    box-shadow: 0 0 14px 2px var(--accent-glow);
+  }
+
+  .tag{
+    font-family: 'Press Start 2P', monospace;
+    font-size: 8px;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  .cabinet h2{
+    font-family: 'Press Start 2P', monospace;
+    font-size: 16px;
+    line-height: 1.5;
+    margin: 4px 0 2px;
+    color: #fff;
+  }
+  .pitch{
+    color: var(--text);
+    font-size: 19px;
+    line-height: 1.35;
+    min-height: 78px;
+  }
+
+  .meta{
+    display:flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 2px;
+  }
+  .chip{
+    font-size: 14px;
+    color: var(--text-dim);
+    border: 1px solid var(--panel-edge);
+    border-radius: 3px;
+    padding: 3px 8px;
+    font-family: 'VT323', monospace;
+  }
+
+  .play-row{
+    margin-top: auto;
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    gap: 10px;
+    padding-top: 8px;
+  }
+  .filename{
+    color: var(--text-dim);
+    font-size: 15px;
+  }
+  .play-btn{
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
+    color: #0a0e14;
+    background: var(--accent);
+    border: none;
+    border-radius: 3px;
+    padding: 10px 14px;
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow: 0 0 0 0 var(--accent-glow);
+    transition: box-shadow 0.15s ease, transform 0.1s ease;
+  }
+  .play-btn:hover{
+    box-shadow: 0 0 16px 2px var(--accent-glow);
+    transform: translateY(-1px);
+  }
+  .play-btn:active{ transform: translateY(0); }
+
+  /* per-game accents */
+  .dungeon{ --accent: var(--dungeon); --accent-glow: var(--dungeon-glow); }
+  .rabbit{ --accent: var(--rabbit); --accent-glow: var(--rabbit-glow); }
+  .fury{ --accent: var(--fury); --accent-glow: var(--fury-glow); }
+  .racing{ --accent: var(--racing); --accent-glow: var(--racing-glow); }
+  .chaos{ --accent: var(--chaos1); --accent-glow: #ff3dbd55; }
+  .chaos::before{
+    background: linear-gradient(90deg, var(--chaos1), var(--chaos2));
+    box-shadow: 0 0 14px 2px #3dfff055;
+  }
+  .chaos .tag{
+    background: linear-gradient(90deg, var(--chaos1), var(--chaos2));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .chaos .play-btn{
+    background: linear-gradient(90deg, var(--chaos1), var(--chaos2));
+  }
+
+  footer{
+    margin-top: 64px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 16px;
+  }
+  footer a{ color: var(--amber); text-decoration: none; }
+  footer a:hover{ text-decoration: underline; }
+
+  @media (prefers-reduced-motion: reduce){
+    h1, .insert-coin{ animation: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">GAME LAB — 5 CABINETS, 1 BROWSER TAB</div>
+    <h1>GAME LAB<br>ARCADE</h1>
+    <p>A collection of student-built HTML5 games. Pick a cabinet, hit play — everything runs straight in the browser, no install required.</p>
+    <div class="insert-coin">▶ INSERT COIN TO CONTINUE</div>
+  </header>
+
+  <div class="grid">
+
+    <article class="cabinet dungeon">
+      <span class="tag">Action Platformer</span>
+      <h2>Trap Dungeon67</h2>
+      <p class="pitch">Fight your way down a trap-filled dungeon with one life and one hit to lose it. Bullet-hell bosses, chainsaws, rolling boulders, and fluid Dead-Cells-style combat, all in a pixel-art world built in the spirit of Trap Dungeon 2 and Metal Slug.</p>
+      <div class="meta">
+        <span class="chip">WASD move</span>
+        <span class="chip">Q/E/R items</span>
+        <span class="chip">1 life</span>
+      </div>
+      <div class="play-row">
+        <span class="filename">dungoun-adventures.html</span>
+        <a class="play-btn" href="dungoun-adventures.html">PLAY ▶</a>
+      </div>
+    </article>
+
+    <article class="cabinet rabbit">
+      <span class="tag">Asymmetric Horror</span>
+      <h2>Hungry Rabbit</h2>
+      <p class="pitch">A lab experiment goes wrong and an infected rabbit turns violent. Play as the rabbit hunting scientists, or the scientists trying to neutralize the threat, in tense 2-minute rounds with stamina, cloning, and backup calls.</p>
+      <div class="meta">
+        <span class="chip">Arrow keys</span>
+        <span class="chip">Space ability</span>
+        <span class="chip">2 min rounds</span>
+      </div>
+      <div class="play-row">
+        <span class="filename">hungry-rabbit.html</span>
+        <a class="play-btn" href="hungry-rabbit.html">PLAY ▶</a>
+      </div>
+    </article>
+
+    <article class="cabinet fury">
+      <span class="tag">Fighting Game</span>
+      <h2>Pixel Fury</h2>
+      <p class="pitch">One-on-one pixel-art combat inspired by Street Fighter 2. Countdown, FIGHT, and a best-of round structure with punches, kicks, blocks, and a victory pose for the last one standing.</p>
+      <div class="meta">
+        <span class="chip">P1: Arrows + 1/2/3</span>
+        <span class="chip">P2: WASD + U/I/O</span>
+      </div>
+      <div class="play-row">
+        <span class="filename">pixel-fury.html</span>
+        <a class="play-btn" href="pixel-fury.html">PLAY ▶</a>
+      </div>
+    </article>
+
+    <article class="cabinet chaos">
+      <span class="tag">Territory Shooter</span>
+      <h2>Color Chaos</h2>
+      <p class="pitch">A 2D take on Splatoon: pick your color and paint the map with it faster than the other team can paint over you. Whoever controls the most territory when the ink settles wins.</p>
+      <div class="meta">
+        <span class="chip">P1: Arrows, N/M</span>
+        <span class="chip">P2: WASD, Z/X</span>
+      </div>
+      <div class="play-row">
+        <span class="filename">color-chaos.html</span>
+        <a class="play-btn" href="color-chaos.html">PLAY ▶</a>
+      </div>
+    </article>
+
+    <article class="cabinet racing">
+      <span class="tag">Arcade Racing</span>
+      <h2>F3 Racing 2026</h2>
+      <p class="pitch">Pixel-art formula racing across three-lap circuits, with pit stops, retro NPC mechanics, and Mario Kart-style power-ups layered over F1-inspired handling. Built for local multiplayer.</p>
+      <div class="meta">
+        <span class="chip">WASD drive</span>
+        <span class="chip">B power-up</span>
+        <span class="chip">3 laps</span>
+      </div>
+      <div class="play-row">
+        <span class="filename">f3-racing-2026.html</span>
+        <a class="play-btn" href="f3-racing-2026.html">PLAY ▶</a>
+      </div>
+    </article>
+
+  </div>
+
+  <footer>
+    Built with HTML, CSS &amp; JavaScript · <a href="README.md">README</a>
+  </footer>
+
+</div>
+</body>
+</html>
